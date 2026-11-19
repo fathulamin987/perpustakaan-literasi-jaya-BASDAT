@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block page_title %}Data Buku{% endblock %}
+
+{% block content %}
+<!-- HEADER HALAMAN DATA BUKU -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 46px; height: 46px; font-size: 1.35rem; background: linear-gradient(135deg, #1d70e8 0%, #155bc0 100%) !important;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+        <div>
+            <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.01em;">Data Buku</h4>
+            <p class="text-muted small mb-0">Kelola katalog dan stok buku perpustakaan</p>
+        </div>
+    </div>
+
+    <!-- Tombol Tambah Buku Tertata Rapi -->
+    <button class="btn-blue-primary" data-bs-toggle="modal" data-bs-target="#addBukuModal">
+        <i class="fa-solid fa-plus"></i>
+        <span>Tambah Buku</span>
+    </button>
+</div>
+
+<!-- KARTU TABEL DATA BUKU -->
+<div class="ui-card">
+    <!-- Filter Toolbar Tertata Rapi -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <!-- Pencarian -->
+        <form method="GET" action="{{ url_for('buku_list') }}" class="d-flex gap-2 flex-grow-1" style="max-width: 440px;">
+            <div class="topbar-search-wrap w-100">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" placeholder="Cari judul, penulis, atau ISBN..." value="{{ selected_q }}">
+            </div>
+            {% if selected_q or selected_kategori %}
+                <a href="{{ url_for('buku_list') }}" class="btn btn-light border btn-sm d-flex align-items-center px-3" title="Reset Filter">
+                    <i class="fa-solid fa-rotate-right text-muted"></i>
+                </a>
+            {% endif %}
+        </form>
+
+        <!-- Dropdowns Filter Kategori & Stok -->
+        <form method="GET" action="{{ url_for('buku_list') }}" class="d-flex gap-2">
+            <input type="hidden" name="q" value="{{ selected_q }}">
+            <select name="kategori" class="form-select form-select-sm" style="border-radius: 8px; font-weight: 500;" onchange="this.form.submit()">
+                <option value="">Semua Kategori</option>
+                {% for kat in kategori_list %}
+                <option value="{{ kat.Kategori }}" {% if selected_kategori == kat.Kategori %}selected{% endif %}>
+                    {{ kat.Kategori }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="stok" class="form-select form-select-sm" style="border-radius: 8px; font-weight: 500;" onchange="this.form.submit()">
+                <option value="">Semua Stok</option>
+                <option value="tersedia" {% if selected_stok == 'tersedia' %}selected{% endif %}>Tersedia (>0)</option>
+                <option value="habis" {% if selected_stok == 'habis' %}selected{% endif %}>Habis (0)</option>
+            </select>
+        </form>
+    </div>
+
+    <!-- Tabel Buku -->
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">No</th>
+                    <th style="width: 95px;">ID Buku</th>
+                    <th>Judul Buku</th>
+                    <th>Penulis</th>
+                    <th>Penerbit</th>
+                    <th style="width: 75px;" class="text-center">Tahun</th>
+                    <th style="width: 75px;" class="text-center">Stok</th>
+                    <th>Kategori</th>
+                    <th class="text-end" style="width: 100px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if buku_list %}
+                    {% for b in buku_list %}
+                    <tr>
+                        <td class="text-muted">{{ loop.index }}</td>
+                        <td><span class="badge bg-light text-dark border font-monospace fw-bold">{{ b.ID_Buku }}</span></td>
+                        <td class="fw-semibold text-dark">{{ b.Judul }}</td>
+                        <td>{{ b.Penulis }}</td>
+                        <td>{{ b.Penerbit }}</td>
+                        <td class="text-center">{{ b.Tahun_Terbit }}</td>
+                        <td class="text-center">
+                            {% if b.Jumlah_Stok > 0 %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fw-bold">{{ b.Jumlah_Stok }}</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fw-bold">0</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-light text-secondary border px-2 py-1">{{ b.Kategori }}</span></td>
+                        <td class="text-end">
+                            <!-- Tombol Aksi Tertata Berjajar Rapi -->
+                            <div class="table-action-group">
+                                <button type="button" class="btn-table-action btn-table-edit"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editBukuModal"
+                                        data-id="{{ b.ID_Buku }}"
+                                        data-judul="{{ b.Judul }}"
+                                        data-penulis="{{ b.Penulis }}"
+                                        data-penerbit="{{ b.Penerbit }}"
+                                        data-tahun="{{ b.Tahun_Terbit }}"
+                                        data-isbn="{{ b.ISBN }}"
+                                        data-stok="{{ b.Jumlah_Stok }}"
+                                        data-kategori="{{ b.Kategori }}"
+                                        title="Edit Buku">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+
+                                <form action="{{ url_for('buku_hapus', id_buku=b.ID_Buku) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data buku {{ b.ID_Buku }}?');">
+                                    <button type="submit" class="btn-table-action btn-table-del" title="Hapus Buku">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-book-open fs-2 mb-2 text-secondary"></i>
+                            <p class="mb-0">Tidak ada data buku yang sesuai dengan pencarian.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer Tabel: Info Jumlah & Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+        <small class="text-muted">Menampilkan 1-{{ buku_list|length }} dari {{ buku_list|length }} data</small>
+        <div class="pagination-wrap">
+            <a href="#" class="page-num-btn"><i class="fa-solid fa-chevron-left" style="font-size: 0.65rem;"></i></a>
+            <a href="#" class="page-num-btn active">1</a>
+            <a href="#" class="page-num-btn"><i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i></a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Buku -->
+<div class="modal fade" id="addBukuModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-book-medical text-primary me-2"></i>Tambah Koleksi Buku</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('buku_tambah') }}" method="POST">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">ID Buku</label>
+                            <input type="text" name="id_buku" class="form-control" value="{{ next_id }}" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold small">Judul Buku <span class="text-danger">*</span></label>
+                            <input type="text" name="judul" class="form-control" placeholder="Judul buku..." required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Penulis <span class="text-danger">*</span></label>
+                            <input type="text" name="penulis" class="form-control" placeholder="Nama penulis..." required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Penerbit <span class="text-danger">*</span></label>
+                            <input type="text" name="penerbit" class="form-control" placeholder="Nama penerbit..." required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Tahun Terbit</label>
+                            <input type="number" name="tahun_terbit" class="form-control" min="1900" max="2099" value="2024" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">ISBN</label>
+                            <input type="text" name="isbn" class="form-control" placeholder="978-..." required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Jumlah Stok</label>
+                            <input type="number" name="jumlah_stok" class="form-control" min="0" value="5" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Kategori <span class="text-danger">*</span></label>
+                            <input type="text" name="kategori" class="form-control" placeholder="Contoh: Teknologi Informasi, Sastra..." required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-blue-primary"><i class="fa-solid fa-check me-1"></i> Simpan Buku</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Buku -->
+<div class="modal fade" id="editBukuModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Perbarui Data Buku</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editBukuForm" method="POST">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">ID Buku</label>
+                            <input type="text" id="edit_id_buku" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold small">Judul Buku <span class="text-danger">*</span></label>
+                            <input type="text" name="judul" id="edit_judul" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Penulis <span class="text-danger">*</span></label>
+                            <input type="text" name="penulis" id="edit_penulis" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Penerbit <span class="text-danger">*</span></label>
+                            <input type="text" name="penerbit" id="edit_penerbit" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Tahun Terbit</label>
+                            <input type="number" name="tahun_terbit" id="edit_tahun" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">ISBN</label>
+                            <input type="text" name="isbn" id="edit_isbn" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Jumlah Stok</label>
+                            <input type="number" name="jumlah_stok" id="edit_stok" class="form-control" min="0" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Kategori</label>
+                            <input type="text" name="kategori" id="edit_kategori" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-blue-primary"><i class="fa-solid fa-check me-1"></i> Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const editModal = document.getElementById('editBukuModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            const id = btn.getAttribute('data-id');
+            document.getElementById('editBukuForm').action = `/buku/edit/${id}`;
+            document.getElementById('edit_id_buku').value = id;
+            document.getElementById('edit_judul').value = btn.getAttribute('data-judul');
+            document.getElementById('edit_penulis').value = btn.getAttribute('data-penulis');
+            document.getElementById('edit_penerbit').value = btn.getAttribute('data-penerbit');
+            document.getElementById('edit_tahun').value = btn.getAttribute('data-tahun');
+            document.getElementById('edit_isbn').value = btn.getAttribute('data-isbn');
+            document.getElementById('edit_stok').value = btn.getAttribute('data-stok');
+            document.getElementById('edit_kategori').value = btn.getAttribute('data-kategori');
+        });
+    }
+</script>
+{% endblock %}

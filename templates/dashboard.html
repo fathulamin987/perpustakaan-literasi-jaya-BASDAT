@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- 1. HERO BANNER WELCOME DENGAN BACKGROUND BUKUPERPUS.PNG -->
+<div class="hero-welcome-card">
+    <div class="hero-welcome-text">
+        <h2>Selamat Datang di<br>Literasi Jaya</h2>
+        <p>Sistem Informasi Perpustakaan yang Modern dan Terpercaya</p>
+    </div>
+    <div class="hero-book-art d-none d-md-flex">
+        <i class="fa-solid fa-book-bookmark"></i>
+    </div>
+</div>
+
+<!-- 2. 4 KOTAK STATISTIK (METRIC CARDS) PERSIS DI GAMBAR -->
+<div class="row g-3 mb-4">
+    <!-- Total Buku -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-metric-card">
+            <div class="stat-icon-circle icon-blue-bg">
+                <i class="fa-solid fa-book"></i>
+            </div>
+            <div class="stat-metric-content">
+                <div class="stat-metric-title">Total Buku</div>
+                <div class="stat-metric-val">{{ total_buku }}</div>
+                <span class="stat-badge-trend trend-up"><i class="fa-solid fa-arrow-trend-up me-1"></i>{{ total_stok }} Stok</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Anggota -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-metric-card">
+            <div class="stat-icon-circle icon-teal-bg">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="stat-metric-content">
+                <div class="stat-metric-title">Total Anggota</div>
+                <div class="stat-metric-val">{{ total_anggota }}</div>
+                <span class="stat-badge-trend trend-up"><i class="fa-solid fa-user-check me-1"></i>Aktif</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Peminjaman Aktif -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-metric-card">
+            <div class="stat-icon-circle icon-orange-bg">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+            </div>
+            <div class="stat-metric-content">
+                <div class="stat-metric-title">Peminjaman Aktif</div>
+                <div class="stat-metric-val" style="color: #d97706;">{{ pinjam_aktif }}</div>
+                <span class="stat-badge-trend trend-warn"><i class="fa-regular fa-clock me-1"></i>Dipinjam</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terlambat -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-metric-card">
+            <div class="stat-icon-circle icon-red-bg">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div class="stat-metric-content">
+                <div class="stat-metric-title">Terlambat</div>
+                <div class="stat-metric-val" style="color: #ef4444;">{{ pinjam_terlambat }}</div>
+                <span class="stat-badge-trend trend-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>Perlu Tindakan</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. GRAFIK STATISTIK PEMINJAMAN & BUKU TERPOPULER -->
+<div class="row g-4 mb-4">
+    <!-- Kiri: Grafik Statistik Peminjaman -->
+    <div class="col-lg-7 col-xl-8">
+        <div class="ui-card">
+            <div class="ui-card-header">
+                <h5 class="ui-card-title">
+                    <i class="fa-solid fa-chart-line text-primary"></i>
+                    Statistik Peminjaman
+                </h5>
+                <span class="badge bg-light text-secondary border">6 Bulan Terakhir</span>
+            </div>
+            <div style="height: 240px; position: relative;">
+                <canvas id="loanChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kanan: Buku Terpopuler (View: v_bukupopuler) -->
+    <div class="col-lg-5 col-xl-4">
+        <div class="ui-card">
+            <div class="ui-card-header">
+                <h5 class="ui-card-title">
+                    <i class="fa-solid fa-fire text-danger"></i>
+                    Buku Terpopuler
+                </h5>
+                <a href="{{ url_for('laporan', tab='buku_populer') }}" class="small text-decoration-none fw-semibold" style="color: #1d70e8;">
+                    Lihat Semua <i class="fa-solid fa-chevron-right ms-1" style="font-size: 0.65rem;"></i>
+                </a>
+            </div>
+
+            <div class="d-flex flex-column gap-1">
+                {% if buku_populer %}
+                    {% for b in buku_populer %}
+                    <div class="pop-book-item">
+                        <div class="pop-book-left">
+                            <span class="pop-book-rank">{{ loop.index }}</span>
+                            <div class="pop-book-thumb">
+                                <i class="fa-solid fa-book"></i>
+                            </div>
+                            <div class="pop-book-meta">
+                                <h6 title="{{ b.Judul }}">{{ b.Judul }}</h6>
+                                <p>{{ b.Penulis }}</p>
+                            </div>
+                        </div>
+                        <span class="pop-book-badge">{{ b.Jumlah_Peminjaman }}x</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center py-4 small">Belum ada data peminjaman populer.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Inisialisasi Grafik Garis Biru sesuai Mockup
+    const ctx = document.getElementById('loanChart').getContext('2d');
+    const chartGradient = ctx.createLinearGradient(0, 0, 0, 230);
+    chartGradient.addColorStop(0, 'rgba(29, 112, 232, 0.25)');
+    chartGradient.addColorStop(1, 'rgba(29, 112, 232, 0.00)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt'],
+            datasets: [{
+                label: 'Jumlah Peminjaman',
+                data: [30, 48, 42, 60, 55, 75],
+                borderColor: '#1d70e8',
+                backgroundColor: chartGradient,
+                borderWidth: 2.5,
+                tension: 0.35,
+                fill: true,
+                pointBackgroundColor: '#1d70e8',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4.5,
+                pointHoverRadius: 6.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0b2341',
+                    padding: 10,
+                    borderRadius: 8
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 25,
+                        color: '#94a3b8',
+                        font: { size: 11 }
+                    },
+                    grid: {
+                        color: '#f1f5f9',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: 11 }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

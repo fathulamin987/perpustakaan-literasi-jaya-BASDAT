@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block page_title %}Info Database XAMPP{% endblock %}
+
+{% block content %}
+<!-- HEADER INFO DATABASE -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 46px; height: 46px; font-size: 1.35rem; background: linear-gradient(135deg, #1d70e8 0%, #155bc0 100%) !important;">
+            <i class="fa-solid fa-database"></i>
+        </div>
+        <div>
+            <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.01em;">Info Basis Data Perpustakaan</h4>
+            <p class="text-muted small mb-0">Informasi server MariaDB/MySQL XAMPP & arsitektur objek database <code>perpustakaanliterasijaya</code></p>
+        </div>
+    </div>
+
+    <div class="header-status-badge">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>MySQL XAMPP Terhubung (Port 3306)</span>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Koneksi & Server Info -->
+    <div class="col-lg-6">
+        <div class="ui-card">
+            <div class="ui-card-header">
+                <h5 class="ui-card-title"><i class="fa-solid fa-server text-primary"></i> Parameter Koneksi XAMPP</h5>
+            </div>
+            <table class="table table-borderless table-sm">
+                <tr>
+                    <td class="text-muted" style="width: 160px;">Status Server:</td>
+                    <td>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                            <i class="fa-solid fa-circle-check me-1"></i> MySQL Terhubung (Online)
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Host & Port:</td>
+                    <td><code>{{ config.DB_HOST }}:{{ config.DB_PORT }}</code></td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Nama Database:</td>
+                    <td><strong class="text-primary">{{ config.DB_NAME }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="text-muted">User Database:</td>
+                    <td><code>{{ config.DB_USER }}</code> (Password default XAMPP kosong)</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Engine Database:</td>
+                    <td><span class="badge bg-light text-dark border">{{ health.version or '-' }}</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Ringkasan Data -->
+    <div class="col-lg-6">
+        <div class="ui-card">
+            <div class="ui-card-header">
+                <h5 class="ui-card-title"><i class="fa-solid fa-cubes-stacked text-success"></i> Ringkasan Record Data Realtime</h5>
+            </div>
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Tabel Buku</small>
+                        <h4 class="fw-bold mb-0 text-dark">{{ health.total_buku }} Judul</h4>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Tabel Anggota</small>
+                        <h4 class="fw-bold mb-0 text-dark">{{ health.total_anggota }} Orang</h4>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Total Peminjaman</small>
+                        <h4 class="fw-bold mb-0 text-dark">{{ health.total_peminjaman }} Transaksi</h4>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Keterlambatan</small>
+                        <h4 class="fw-bold mb-0 text-danger">{{ health.total_terlambat }} Transaksi</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Objek Basis Data: Tabel, Views, Procedures, Triggers -->
+<div class="row g-4 mb-4">
+    <!-- Tabel & Views -->
+    <div class="col-lg-6">
+        <div class="ui-card">
+            <div class="ui-card-header">
+                <h6 class="ui-card-title"><i class="fa-solid fa-table text-primary"></i> Tabel Utama & Views</h6>
+            </div>
+            <p class="text-muted small mb-2">Tabel Utama (Base Tables):</p>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                {% for t in tables %}
+                <span class="badge bg-light text-dark border px-3 py-1.5"><i class="fa-solid fa-table-cells me-1 text-primary"></i> {{ t }}</span>
+                {% endfor %}
+            </div>
+
+            <p class="text-muted small mb-2">SQL Views (Tampilan Terstruktur):</p>
+            <div class="d-flex flex-wrap gap-2">
+                {% for v in views %}
+                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-3 py-1.5"><i class="fa-solid fa-eye me-1"></i> {{ v }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Procedures & Triggers -->
+    <div class="col-lg-6">
+        <div class="ui-card">
+            <div class="ui-card-header">
+                <h6 class="ui-card-title"><i class="fa-solid fa-bolt text-warning"></i> Stored Procedures & Triggers</h6>
+            </div>
+            <p class="text-muted small mb-2">Stored Procedures:</p>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                {% for p in procedures %}
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-1.5"><i class="fa-solid fa-bolt me-1"></i> {{ p }}()</span>
+                {% endfor %}
+            </div>
+
+            <p class="text-muted small mb-2">Database Triggers:</p>
+            <div class="d-flex flex-wrap gap-2">
+                {% for tr in triggers %}
+                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle px-3 py-1.5"><i class="fa-solid fa-shield me-1"></i> {{ tr.Trigger }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STRUKTUR SKEMA TABEL LENGKAP -->
+<div class="ui-card">
+    <div class="ui-card-header">
+        <h5 class="ui-card-title"><i class="fa-solid fa-diagram-project text-primary"></i> Struktur Skema Tabel Database</h5>
+    </div>
+
+    <div class="row g-4">
+        <!-- Skema Tabel Buku -->
+        <div class="col-lg-4">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-book text-primary me-1"></i> Tabel: <code>buku</code></h6>
+                <ul class="list-unstyled small mb-0 font-monospace text-secondary" style="font-size: 0.8rem;">
+                    <li><strong class="text-dark">ID_Buku</strong> (VARCHAR 10, PK)</li>
+                    <li>Judul (VARCHAR 255)</li>
+                    <li>Penulis (VARCHAR 100)</li>
+                    <li>Penerbit (VARCHAR 100)</li>
+                    <li>Tahun_Terbit (INT 11)</li>
+                    <li>ISBN (VARCHAR 20, UNIQUE)</li>
+                    <li>Jumlah_Stok (INT 11)</li>
+                    <li>Kategori (VARCHAR 50)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Skema Tabel Anggota -->
+        <div class="col-lg-4">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-users text-success me-1"></i> Tabel: <code>anggota</code></h6>
+                <ul class="list-unstyled small mb-0 font-monospace text-secondary" style="font-size: 0.8rem;">
+                    <li><strong class="text-dark">ID_Anggota</strong> (VARCHAR 10, PK)</li>
+                    <li>Nama_Anggota (VARCHAR 100)</li>
+                    <li>Alamat (VARCHAR 255)</li>
+                    <li>No_Telepon (VARCHAR 20)</li>
+                    <li>Email (VARCHAR 100, UNIQUE)</li>
+                    <li>Tanggal_Daftar (DATE)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Skema Tabel Peminjaman -->
+        <div class="col-lg-4">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-arrow-right-arrow-left text-warning me-1"></i> Tabel: <code>peminjaman</code></h6>
+                <ul class="list-unstyled small mb-0 font-monospace text-secondary" style="font-size: 0.8rem;">
+                    <li><strong class="text-dark">ID_Peminjaman</strong> (VARCHAR 10, PK)</li>
+                    <li>ID_Buku (VARCHAR 10, FK)</li>
+                    <li>ID_Anggota (VARCHAR 10, FK)</li>
+                    <li>Tanggal_Peminjaman (DATE)</li>
+                    <li>Tanggal_Jatuh_Tempo (DATE)</li>
+                    <li>Tanggal_Pengembalian (DATE, NULL)</li>
+                    <li>Status_Peminjaman (ENUM)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

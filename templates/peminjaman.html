@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block page_title %}Peminjaman{% endblock %}
+
+{% block content %}
+<!-- HEADER HALAMAN PEMINJAMAN -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 46px; height: 46px; font-size: 1.35rem; background: linear-gradient(135deg, #1d70e8 0%, #155bc0 100%) !important;">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </div>
+        <div>
+            <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.01em;">Peminjaman</h4>
+            <p class="text-muted small mb-0">Transaksi sirkulasi peminjaman dan pengembalian buku</p>
+        </div>
+    </div>
+
+    <button class="btn-blue-primary" data-bs-toggle="modal" data-bs-target="#modalPinjamBuku">
+        <i class="fa-solid fa-plus"></i>
+        <span>Transaksi Baru</span>
+    </button>
+</div>
+
+<!-- 2 KARTU AKSI CEPAT TERTATA PERSIS DI MOCKUP (PINJAM BUKU & KEMBALIKAN BUKU) -->
+<div class="row g-4 mb-4">
+    <!-- Card 1: Pinjam Buku -->
+    <div class="col-md-6">
+        <div class="action-feature-card">
+            <div class="action-card-left">
+                <div class="action-card-icon icon-blue-bg">
+                    <i class="fa-solid fa-book"></i>
+                </div>
+                <div>
+                    <h5 class="action-card-title">Pinjam Buku</h5>
+                    <p class="action-card-sub">Lakukan peminjaman buku baru</p>
+                </div>
+            </div>
+            <button class="btn-blue-primary" data-bs-toggle="modal" data-bs-target="#modalPinjamBuku">
+                <i class="fa-solid fa-plus"></i> Pinjam Sekarang
+            </button>
+        </div>
+    </div>
+
+    <!-- Card 2: Kembalikan Buku -->
+    <div class="col-md-6">
+        <div class="action-feature-card">
+            <div class="action-card-left">
+                <div class="action-card-icon icon-teal-bg">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </div>
+                <div>
+                    <h5 class="action-card-title">Kembalikan Buku</h5>
+                    <p class="action-card-sub">Proses pengembalian buku pinjaman</p>
+                </div>
+            </div>
+            <button class="btn-teal-primary" data-bs-toggle="modal" data-bs-target="#modalKembalikanBuku">
+                <i class="fa-solid fa-check"></i> Kembalikan Sekarang
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- KARTU TABEL DATA PEMINJAMAN TERBARU -->
+<div class="ui-card">
+    <div class="ui-card-header">
+        <h5 class="ui-card-title">
+            <i class="fa-solid fa-table-list text-primary"></i>
+            Data Peminjaman Terbaru
+        </h5>
+        
+        <form method="GET" action="{{ url_for('peminjaman_list') }}" class="d-flex gap-2 align-items-center">
+            <select name="status" class="form-select form-select-sm" style="border-radius: 8px; font-weight: 500;" onchange="this.form.submit()">
+                <option value="Semua" {% if selected_status == 'Semua' %}selected{% endif %}>Semua Status ({{ counts.total or 0 }})</option>
+                <option value="Dipinjam" {% if selected_status == 'Dipinjam' %}selected{% endif %}>Dipinjam ({{ counts.dipinjam or 0 }})</option>
+                <option value="Dikembalikan" {% if selected_status == 'Dikembalikan' %}selected{% endif %}>Dikembalikan ({{ counts.dikembalikan or 0 }})</option>
+                <option value="Terlambat" {% if selected_status == 'Terlambat' %}selected{% endif %}>Terlambat ({{ counts.terlambat or 0 }})</option>
+            </select>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">No</th>
+                    <th style="width: 110px;">ID Pinjam</th>
+                    <th>Judul Buku</th>
+                    <th>Nama Anggota</th>
+                    <th>Tanggal Pinjam</th>
+                    <th>Jatuh Tempo</th>
+                    <th>Status</th>
+                    <th class="text-end" style="width: 140px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if peminjaman_list %}
+                    {% for p in peminjaman_list %}
+                    <tr>
+                        <td class="text-muted">{{ loop.index }}</td>
+                        <td><span class="badge bg-light text-dark border font-monospace fw-bold">{{ p.ID_Peminjaman }}</span></td>
+                        <td class="fw-semibold text-dark">{{ p.Judul_Buku }}</td>
+                        <td>{{ p.Nama_Anggota }}</td>
+                        <td>{{ p.Tanggal_Peminjaman | format_date }}</td>
+                        <td>{{ p.Tanggal_Jatuh_Tempo | format_date }}</td>
+                        <td>
+                            {% if p.Status_Peminjaman == 'Dipinjam' %}
+                                <span class="status-badge-pill dipinjam"><i class="fa-regular fa-clock me-1"></i>Dipinjam</span>
+                            {% elif p.Status_Peminjaman == 'Dikembalikan' %}
+                                <span class="status-badge-pill dikembalikan"><i class="fa-solid fa-check me-1"></i>Dikembalikan</span>
+                            {% else %}
+                                <span class="status-badge-pill terlambat"><i class="fa-solid fa-triangle-exclamation me-1"></i>Terlambat</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="table-action-group">
+                                <!-- Tombol Kembalikan Rapi -->
+                                {% if p.Status_Peminjaman == 'Dipinjam' or p.Status_Peminjaman == 'Terlambat' %}
+                                <form action="{{ url_for('peminjaman_kembalikan', id_peminjaman=p.ID_Peminjaman) }}" method="POST" class="d-inline" onsubmit="return confirm('Kembalikan buku [{{ p.ID_Peminjaman }}]? (Stok otomatis bertambah via SP_KembalikanBuku)');">
+                                    <button type="submit" class="btn-table-return" title="Kembalikan Buku via Stored Procedure">
+                                        <i class="fa-solid fa-rotate-left"></i> Kembali
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                <!-- Tombol Hapus Merah Kotak Rapi -->
+                                <form action="{{ url_for('peminjaman_hapus', id_peminjaman=p.ID_Peminjaman) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus riwayat transaksi {{ p.ID_Peminjaman }}?');">
+                                    <button type="submit" class="btn-table-action btn-table-del" title="Hapus Riwayat">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-inbox fs-2 mb-2 text-secondary"></i>
+                            <p class="mb-0">Belum ada riwayat peminjaman.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer Tabel: Info Jumlah & Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+        <small class="text-muted">Menampilkan 1-{{ peminjaman_list|length }} dari {{ peminjaman_list|length }} data</small>
+        <div class="pagination-wrap">
+            <a href="#" class="page-num-btn"><i class="fa-solid fa-chevron-left" style="font-size: 0.65rem;"></i></a>
+            <a href="#" class="page-num-btn active">1</a>
+            <a href="#" class="page-num-btn"><i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i></a>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 1: FORM PINJAM BUKU (SP_PinjamBuku) -->
+<div class="modal fade" id="modalPinjamBuku" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-book-medical text-primary me-2"></i>Formulir Peminjaman Buku</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('peminjaman_tambah') }}" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="fa-solid fa-circle-info me-1"></i>
+                        Peminjaman diproses via Stored Procedure <code>SP_PinjamBuku</code>: stok buku dikurangi 1 dan jatuh tempo otomatis diset 7 hari.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Pilih Buku (Stok Tersedia) <span class="text-danger">*</span></label>
+                        <select name="id_buku" class="form-select" required>
+                            <option value="">-- Pilih Buku --</option>
+                            {% for b in buku_tersedia %}
+                            <option value="{{ b.ID_Buku }}">
+                                [{{ b.ID_Buku }}] {{ b.Judul }} (Sisa Stok: {{ b.Jumlah_Stok }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Pilih Anggota Peminjam <span class="text-danger">*</span></label>
+                        <select name="id_anggota" class="form-select" required>
+                            <option value="">-- Pilih Anggota --</option>
+                            {% for a in daftar_anggota %}
+                            <option value="{{ a.ID_Anggota }}">
+                                [{{ a.ID_Anggota }}] {{ a.Nama_Anggota }} ({{ a.No_Telepon }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-blue-primary"><i class="fa-solid fa-check me-1"></i> Simpan Peminjaman</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 2: FORM PENGEMBALIAN BUKU (SP_KembalikanBuku) -->
+<div class="modal fade" id="modalKembalikanBuku" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-rotate-left text-success me-2"></i>Formulir Pengembalian Buku</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('proses_pengembalian') }}" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-success bg-opacity-25 py-2 small mb-3">
+                        <i class="fa-solid fa-circle-check me-1"></i>
+                        Pengembalian mengeksekusi Stored Procedure <code>SP_KembalikanBuku</code>: stok buku dipulihkan otomatis (+1).
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Pilih Transaksi yang Akan Dikembalikan <span class="text-danger">*</span></label>
+                        <select name="id_peminjaman" class="form-select" required>
+                            <option value="">-- Pilih Transaksi --</option>
+                            {% for p in peminjaman_list %}
+                                {% if p.Status_Peminjaman == 'Dipinjam' or p.Status_Peminjaman == 'Terlambat' %}
+                                <option value="{{ p.ID_Peminjaman }}">
+                                    [{{ p.ID_Peminjaman }}] {{ p.Judul_Buku }} - {{ p.Nama_Anggota }} (Tempo: {{ p.Tanggal_Jatuh_Tempo | format_date }})
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-teal-primary"><i class="fa-solid fa-check me-1"></i> Proses Pengembalian</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

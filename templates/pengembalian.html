@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block page_title %}Pengembalian Buku{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Form Pengembalian Cepat -->
+    <div class="col-lg-4">
+        <div class="card-clean">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-rotate-left text-primary me-2"></i>Form Pengembalian Cepat</h5>
+            <p class="text-secondary small mb-3">
+                Masukkan atau pilih ID Peminjaman untuk memproses pengembalian secara otomatis via Stored Procedure <code>SP_KembalikanBuku</code>.
+            </p>
+
+            <form action="{{ url_for('proses_pengembalian') }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Pilih Transaksi Peminjaman</label>
+                    <select name="id_peminjaman" class="form-select" required>
+                        <option value="">-- Pilih Transaksi Pinjam --</option>
+                        {% for item in daftar_pinjam_aktif %}
+                        <option value="{{ item.ID_Peminjaman }}">
+                            [{{ item.ID_Peminjaman }}] {{ item.Judul_Buku }} - {{ item.Nama_Anggota }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="alert alert-info py-2 small mb-3">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Sistem akan otomatis mengecek tanggal jatuh tempo:
+                    <ul class="mb-0 ps-3 mt-1">
+                        <li>Jika tepat waktu: Status menjadi <code>Dikembalikan</code>.</li>
+                        <li>Jika lewat tanggal tempo: Status menjadi <code>Terlambat</code>.</li>
+                        <li>Stok buku akan otomatis bertambah 1 eksemplar.</li>
+                    </ul>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2">
+                    <i class="fa-solid fa-check-circle me-1"></i> Proses Pengembalian Sekarang
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabel Buku yang Masih Dipinjam -->
+    <div class="col-lg-8">
+        <div class="card-clean">
+            <div class="card-header-clean">
+                <h5 class="card-title-text"><i class="fa-solid fa-clock text-warning me-2"></i>Daftar Buku yang Belum Dikembalikan</h5>
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1 rounded-pill">
+                    {{ daftar_pinjam_aktif|length }} Buku Sedang Dipinjam
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>ID Pinjam</th>
+                            <th>Judul Buku</th>
+                            <th>Peminjam</th>
+                            <th>Tgl Jatuh Tempo</th>
+                            <th>Status Waktu</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if daftar_pinjam_aktif %}
+                            {% for p in daftar_pinjam_aktif %}
+                            <tr>
+                                <td><strong>{{ p.ID_Peminjaman }}</strong></td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ p.Judul_Buku }}</div>
+                                    <small class="text-muted">{{ p.ID_Buku }}</small>
+                                </td>
+                                <td>
+                                    <div>{{ p.Nama_Anggota }}</div>
+                                    <small class="text-muted">{{ p.No_Telepon }}</small>
+                                </td>
+                                <td>{{ p.Tanggal_Jatuh_Tempo | format_date }}</td>
+                                <td>
+                                    {% if p.Status_Peminjaman == 'Terlambat' %}
+                                        <span class="badge-status badge-terlambat">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i> Terlambat
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-status badge-dipinjam">
+                                            <i class="fa-solid fa-clock me-1"></i> Sedang Dipinjam
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <form action="{{ url_for('peminjaman_kembalikan', id_peminjaman=p.ID_Peminjaman) }}" method="POST" class="d-inline" onsubmit="return confirm('Proses pengembalian buku untuk [{{ p.ID_Peminjaman }}]?');">
+                                        <button type="submit" class="btn btn-sm btn-success px-2.5 py-1">
+                                            <i class="fa-solid fa-rotate-left me-1"></i> Kembalikan
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="fa-solid fa-circle-check fs-2 text-success mb-2"></i>
+                                    <p class="mb-0">Tidak ada buku yang sedang dipinjam. Semua buku sudah berada di rak perpustakaan.</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

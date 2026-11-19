@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block page_title %}Data Anggota{% endblock %}
+
+{% block content %}
+<!-- HEADER DATA ANGGOTA -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 46px; height: 46px; font-size: 1.35rem; background: linear-gradient(135deg, #1d70e8 0%, #155bc0 100%) !important;">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+            <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.01em;">Data Anggota</h4>
+            <p class="text-muted small mb-0">Kelola informasi anggota perpustakaan</p>
+        </div>
+    </div>
+
+    <!-- Tombol Tambah Anggota Tertata Rapi -->
+    <button class="btn-blue-primary" data-bs-toggle="modal" data-bs-target="#addAnggotaModal">
+        <i class="fa-solid fa-plus"></i>
+        <span>Tambah Anggota</span>
+    </button>
+</div>
+
+<!-- KARTU TABEL DATA ANGGOTA -->
+<div class="ui-card">
+    <!-- Filter Bar -->
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <form method="GET" action="{{ url_for('anggota_list') }}" class="d-flex gap-2" style="width: 380px;">
+            <div class="topbar-search-wrap w-100">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" placeholder="Cari nama anggota..." value="{{ selected_q }}">
+            </div>
+            {% if selected_q %}
+                <a href="{{ url_for('anggota_list') }}" class="btn btn-light border btn-sm d-flex align-items-center px-3" title="Reset Filter">
+                    <i class="fa-solid fa-rotate-right text-muted"></i>
+                </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Tabel Anggota Sesuai Mockup -->
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">No</th>
+                    <th style="width: 105px;">ID Anggota</th>
+                    <th>Nama Anggota</th>
+                    <th>Alamat</th>
+                    <th>No. Telepon</th>
+                    <th>Email</th>
+                    <th style="width: 120px;">Tanggal Daftar</th>
+                    <th class="text-end" style="width: 100px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if anggota_list %}
+                    {% for a in anggota_list %}
+                    <tr>
+                        <td class="text-muted">{{ loop.index }}</td>
+                        <td><span class="badge bg-light text-dark border font-monospace fw-bold">{{ a.ID_Anggota }}</span></td>
+                        <td class="fw-semibold text-dark">{{ a.Nama_Anggota }}</td>
+                        <td><span class="text-secondary small d-inline-block text-truncate" style="max-width: 220px;" title="{{ a.Alamat }}">{{ a.Alamat }}</span></td>
+                        <td>{{ a.No_Telepon }}</td>
+                        <td><span class="text-muted small">{{ a.Email }}</span></td>
+                        <td>{{ a.Tanggal_Daftar | format_date }}</td>
+                        <td class="text-end">
+                            <!-- Tombol Aksi Berjajar Rapi -->
+                            <div class="table-action-group">
+                                <button type="button" class="btn-table-action btn-table-edit"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editAnggotaModal"
+                                        data-id="{{ a.ID_Anggota }}"
+                                        data-nama="{{ a.Nama_Anggota }}"
+                                        data-alamat="{{ a.Alamat }}"
+                                        data-telp="{{ a.No_Telepon }}"
+                                        data-email="{{ a.Email }}"
+                                        data-daftar="{{ a.Tanggal_Daftar }}"
+                                        title="Edit Anggota">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+
+                                <form action="{{ url_for('anggota_hapus', id_anggota=a.ID_Anggota) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data anggota {{ a.ID_Anggota }}?');">
+                                    <button type="submit" class="btn-table-action btn-table-del" title="Hapus Anggota">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-user-slash fs-2 mb-2 text-secondary"></i>
+                            <p class="mb-0">Tidak ada data anggota yang ditemukan.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer Tabel: Info Jumlah & Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+        <small class="text-muted">Menampilkan 1-{{ anggota_list|length }} dari {{ anggota_list|length }} data</small>
+        <div class="pagination-wrap">
+            <a href="#" class="page-num-btn"><i class="fa-solid fa-chevron-left" style="font-size: 0.65rem;"></i></a>
+            <a href="#" class="page-num-btn active">1</a>
+            <a href="#" class="page-num-btn"><i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i></a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Anggota -->
+<div class="modal fade" id="addAnggotaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus text-primary me-2"></i>Tambah Anggota Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('anggota_tambah') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">ID Anggota</label>
+                        <input type="text" name="id_anggota" class="form-control" value="{{ next_id }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nama Lengkap <span class="text-danger">*</span></label>
+                        <input type="text" name="nama_anggota" class="form-control" placeholder="Nama anggota..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Alamat Lengkap <span class="text-danger">*</span></label>
+                        <textarea name="alamat" class="form-control" rows="2" placeholder="Alamat tinggal..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">No. Telepon <span class="text-danger">*</span></label>
+                        <input type="text" name="no_telepon" class="form-control" placeholder="08..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control" placeholder="email@domain.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Tanggal Pendaftaran</label>
+                        <input type="date" name="tanggal_daftar" class="form-control" value="{{ today_str }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-blue-primary"><i class="fa-solid fa-check me-1"></i> Simpan Anggota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Anggota -->
+<div class="modal fade" id="editAnggotaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Perbarui Data Anggota</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editAnggotaForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">ID Anggota</label>
+                        <input type="text" id="edit_id_anggota" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nama Lengkap <span class="text-danger">*</span></label>
+                        <input type="text" name="nama_anggota" id="edit_nama_anggota" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Alamat Lengkap <span class="text-danger">*</span></label>
+                        <textarea name="alamat" id="edit_alamat" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">No. Telepon <span class="text-danger">*</span></label>
+                        <input type="text" name="no_telepon" id="edit_no_telepon" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" id="edit_email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Tanggal Pendaftaran <span class="text-danger">*</span></label>
+                        <input type="date" name="tanggal_daftar" id="edit_tanggal_daftar" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-blue-primary"><i class="fa-solid fa-check me-1"></i> Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const editModal = document.getElementById('editAnggotaModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            const id = btn.getAttribute('data-id');
+            document.getElementById('editAnggotaForm').action = `/anggota/edit/${id}`;
+            document.getElementById('edit_id_anggota').value = id;
+            document.getElementById('edit_nama_anggota').value = btn.getAttribute('data-nama');
+            document.getElementById('edit_alamat').value = btn.getAttribute('data-alamat');
+            document.getElementById('edit_no_telepon').value = btn.getAttribute('data-telp');
+            document.getElementById('edit_email').value = btn.getAttribute('data-email');
+            document.getElementById('edit_tanggal_daftar').value = btn.getAttribute('data-daftar');
+        });
+    }
+</script>
+{% endblock %}
